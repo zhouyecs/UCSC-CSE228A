@@ -93,7 +93,7 @@ class ComplexALU(onlyAdder: Boolean) extends Module {
       io.imagOut := io.imag0 + io.imag1
     }.otherwise {
       io.realOut := io.real0 - io.real1
-      io.imagOut := io.real0 - io.imag1
+      io.imagOut := io.imag0 - io.imag1
     }
   }
 }
