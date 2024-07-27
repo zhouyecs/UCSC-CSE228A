@@ -14,5 +14,23 @@ class PolyEval(coefs: Seq[Int], width: Int) extends Module {
     val out    = Output(UInt())
   })
 
-  ???
+  def power(base: UInt, exp: Int): UInt = {
+    require(exp >= 0)
+    if (exp == 0) {
+      1.U
+    } else {
+      var res = base
+      for (_ <- 1 until exp) {
+        res = res * base
+      }
+      res
+    }
+  }
+
+  // The generated hardware should produce the result combinatorally (within a cycle).
+  val out = coefs.zipWithIndex.map { case (coef, i) =>
+    coef.U * power(io.x, i)
+  }.reduce(_ + _)
+
+  io.out := out
 }

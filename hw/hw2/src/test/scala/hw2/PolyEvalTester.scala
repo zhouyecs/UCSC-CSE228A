@@ -5,11 +5,12 @@ import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 
 class PolyEvalTester extends AnyFlatSpec with ChiselScalatestTester {
-  val width = ???
+  val width = 4
   def testPolyEvalOut(n: Int): Unit = {
-    val coefs = ???
+    val coefs = Seq(4, 5, 6)
     test(new PolyEval(coefs, width)) { dut =>
-      ???
+      dut.io.x.poke(n.U)
+      dut.io.out.expect((4 + 5 * n + 6 * n * n).U)
     }
   }
 
