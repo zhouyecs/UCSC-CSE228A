@@ -1,3 +1,4 @@
 **/.vscode/
+**/.metals/
 **/target/
 **/test_run_dir/
