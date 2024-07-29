@@ -2,3 +2,4 @@
 **/.metals/
 **/target/
 **/test_run_dir/
+**/.ipynb_checkpoints/
