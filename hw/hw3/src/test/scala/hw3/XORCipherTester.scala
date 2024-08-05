@@ -52,7 +52,38 @@ class XORCipherTester extends AnyFlatSpec with ChiselScalatestTester {
           dut.io.state.expect(CipherState.encrypted)
       }
       
-      ???
+      // encrypted -> reading -> encrypted
+      dut.io.state.expect(CipherState.encrypted)
+      dut.io.cmds.poke((new XORCipherCmds).Lit(_.clear -> false.B, _.load -> false.B, _.read -> true.B))
+      for (c <- 0 until numWords) {
+        dut.io.in.poke(c.U) // don't care
+        dut.io.key.bits.poke(key.U)
+        dut.io.key.valid.poke(false.B)
+        dut.io.out.bits.expect((key ^ c).U)
+        dut.io.out.valid.expect(true.B)
+        dut.clock.step()
+        println(c)
+        if (c < numWords - 1)
+          dut.io.state.expect(CipherState.reading)
+        else
+          dut.io.state.expect(CipherState.encrypted)
+      }
+
+      // encrypted -> clearing -> empty
+      dut.io.state.expect(CipherState.encrypted)
+      dut.io.cmds.poke((new XORCipherCmds).Lit(_.clear -> true.B, _.load -> false.B, _.read -> false.B))
+      for (c <- 0 until numWords) {
+        dut.io.in.poke(c.U) // don't care
+        dut.io.key.bits.poke(key.U)
+        dut.io.key.valid.poke(false.B)
+        dut.io.out.bits.expect(0.U)
+        dut.io.out.valid.expect(false.B)
+        dut.clock.step()
+        if (c < numWords - 1)
+          dut.io.state.expect(CipherState.clearing)
+        else
+          dut.io.state.expect(CipherState.empty)
+      }
     }
   }
 }
