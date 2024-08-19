@@ -39,7 +39,6 @@ case class MatMulParams(m: Int, k: Int, n: Int, parallelism: Int = 1, cyclesPerT
   require(cCols % parallelism == 0)
 }
 
-
 class MatMulSC(p: MatMulParams) extends Module {
   val io = IO(new Bundle {
     val in = Flipped(Decoupled(new Bundle {
@@ -52,5 +51,36 @@ class MatMulSC(p: MatMulParams) extends Module {
   require(p.cCols >= p.parallelism)
   require(p.cCols % p.parallelism == 0)
   // BEGIN SOLUTION
-  ???
+  val inReady  = RegInit(true.B)
+  val outValid = RegInit(false.B)
+  val outBits  = Reg(Vec(p.cRows, Vec(p.cCols, SInt(p.w))))
+
+  val parallelism = p.parallelism
+
+  io.in.ready  := inReady
+  io.out.valid := outValid
+  io.out.bits  := outBits
+
+  when(io.in.valid) {
+    inReady  := false.B
+    outValid := false.B
+    val c = Wire(Vec(p.cRows, Vec(p.cCols, SInt(p.w))))
+    val myCounter = Counter(p.m * p.k * p.n / parallelism + 1)
+    for (i <- 0 until p.cRows) {
+      val aRow = io.in.bits.a(i)
+      for (j <- 0 until p.cCols by parallelism) {
+        for (k <- j until j + parallelism) {
+          val sum = RegInit(0.S(p.w))
+          sum := aRow.zip(io.in.bits.b.map(_(k))).map { case (a, b) => a * b }.reduce(_ + _)
+          c(i)(k) := sum
+          myCounter.inc()
+        }
+      }
+    }
+    outBits := c  // update outBits
+    when(myCounter.value === (p.m * p.k * p.n / parallelism).U) {
+      inReady  := true.B
+      outValid := true.B
+    }
+  }
 }

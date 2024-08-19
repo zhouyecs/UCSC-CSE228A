@@ -161,6 +161,7 @@ class MatMulMCTester extends AnyFlatSpec with ChiselScalatestTester {
       dut.clock.step(p.m * p.k * p.n / p.parallelism)
       // check for completion & result
       dut.io.outBlock.valid.expect(true.B)
+      dut.clock.step() // I think this is necessary to get the last output
       val expected = MatMulModel(p, a, b)
       val cChunked = expected.flatten.grouped(p.cElementsPerTransfer).toSeq
       for (cChunk <- cChunked) {
